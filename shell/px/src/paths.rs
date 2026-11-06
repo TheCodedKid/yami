@@ -24,6 +24,30 @@ pub fn data_dir() -> PathBuf {
 pub fn cache_dir() -> PathBuf {
     xdg("XDG_CACHE_HOME").unwrap_or_else(|| home().join(".cache"))
 }
+/// Find an executable on PATH before trying distribution-specific locations.
+pub fn find_executable(name: &str, fallbacks: &[&str]) -> Option<PathBuf> {
+    executable_in(name, std::env::var_os("PATH").as_deref(), fallbacks)
+}
+
+fn executable_in(name: &str, path: Option<&std::ffi::OsStr>, fallbacks: &[&str]) -> Option<PathBuf> {
+    use std::os::unix::fs::PermissionsExt;
+    path.into_iter()
+        .flat_map(std::env::split_paths)
+        .map(|d| d.join(name))
+        .chain(fallbacks.iter().map(PathBuf::from))
+        .find(|p| p.metadata().map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0).unwrap_or(false))
+}
+
+/// System data directories in precedence order; ignore relative XDG entries.
+pub fn data_dirs() -> Vec<PathBuf> {
+    data_dirs_from(std::env::var_os("XDG_DATA_DIRS").as_deref())
+}
+
+fn data_dirs_from(value: Option<&std::ffi::OsStr>) -> Vec<PathBuf> {
+    let value = value.filter(|v| !v.is_empty()).unwrap_or_else(|| std::ffi::OsStr::new("/usr/local/share:/usr/share"));
+    std::env::split_paths(value).filter(|p| p.is_absolute()).collect()
+}
+
 /// папка XDG из ~/.config/user-dirs.dirs (PICTURES, DOWNLOAD…); равная домашней — как не заданная
 pub fn xdg_dir(key: &str) -> Option<PathBuf> {
     let t = std::fs::read_to_string(config_dir().join("user-dirs.dirs")).ok()?;
@@ -217,8 +241,39 @@ pub fn lenient_json<T: serde::de::DeserializeOwned + serde::Serialize + Default>
 
 #[cfg(test)]
 mod tests {
-    use super::{natural, private_tmp, tidy};
+    use super::{data_dirs_from, executable_in, natural, private_tmp, tidy};
     use std::cmp::Ordering::*;
+
+    #[test]
+    fn executable_search() {
+        use std::os::unix::fs::PermissionsExt;
+        let d = private_tmp("executable-test").unwrap();
+        let first = d.join("first");
+        let second = d.join("second");
+        std::fs::create_dir_all(first.join("helper")).unwrap();
+        std::fs::create_dir(&second).unwrap();
+        let helper = second.join("helper");
+        std::fs::write(&helper, "#!/bin/sh\n").unwrap();
+        let path = std::env::join_paths([&first, &second]).unwrap();
+        // A directory or a non-executable file is not a helper.
+        std::fs::set_permissions(&helper, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert_eq!(executable_in("helper", Some(&path), &[]), None);
+        std::fs::set_permissions(&helper, std::fs::Permissions::from_mode(0o755)).unwrap();
+        assert_eq!(executable_in("helper", Some(&path), &["/missing"]), Some(helper.clone()));
+        assert_eq!(executable_in("helper", None, &[helper.to_str().unwrap()]), Some(helper));
+        assert_eq!(executable_in("helper", None, &["/missing"]), None);
+        std::fs::remove_dir_all(d).unwrap();
+    }
+
+    #[test]
+    fn system_data_dirs() {
+        use std::ffi::OsStr;
+        use std::path::PathBuf;
+        let defaults = vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")];
+        assert_eq!(data_dirs_from(None), defaults);
+        assert_eq!(data_dirs_from(Some(OsStr::new(""))), defaults);
+        assert_eq!(data_dirs_from(Some(OsStr::new("relative:/nix/profile/share::/other/share"))), vec![PathBuf::from("/nix/profile/share"), PathBuf::from("/other/share")]);
+    }
 
     #[test]
     fn natural_order() {

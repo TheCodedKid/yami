@@ -66,7 +66,10 @@ if [[ -x $PLAY ]]; then
   [[ ${PIPESTATUS[0]} -eq 0 ]] && ok "yami-play shot --lang en: no Russian left" || bad "yami-play shot --lang en"
 fi
 step "unit tests"
+python3 -I "$ROOT/tools/test-portability.py" || bad "SDDM discovery"
 cargo test --release --locked --workspace --quiet --manifest-path "$ROOT/shell/Cargo.toml" >"$TMP/test.log" 2>&1 && ok "cargo test" || { tail -20 "$TMP/test.log"; bad "cargo test"; }
+
+cargo test --release --locked --manifest-path "$ROOT/shell/Cargo.toml" --features package-managed package_manager_owns_updates >"$TMP/managed-test.log" 2>&1 && ok "package-managed updater" || { tail -20 "$TMP/managed-test.log"; bad "package-managed updater"; }
 
 step "login screen (SDDM theme, offscreen)"
 QML="$(command -v qml6 || command -v qml || { [[ -x /usr/lib/qt6/bin/qml ]] && echo /usr/lib/qt6/bin/qml; } || true)"

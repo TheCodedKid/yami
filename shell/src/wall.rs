@@ -277,9 +277,9 @@ fn login_rgb(img: &Img, own: bool, key: &str) -> Option<Option<Vec<u8>>> {
 
 /// тема SDDM открыта нам на запись (установщик отдаёт theme.conf.user пользователю)
 fn login_writable() -> bool {
-    let d = Path::new("/usr/share/sddm/themes/yami");
+    let Some(d) = yami_px::paths::data_dirs().iter().map(|d| d.join("sddm/themes/yami")).chain([Path::new("/usr/share/sddm/themes/yami").to_path_buf()]).find(|d| d.is_dir()) else { return false };
     let f = d.join("theme.conf.user");
-    let p = if f.exists() { f } else { d.to_path_buf() };
+    let p = if f.exists() { f } else { d };
     let Ok(c) = std::ffi::CString::new(p.to_string_lossy().as_bytes()) else { return false };
     unsafe { libc::access(c.as_ptr(), libc::W_OK) == 0 }
 }

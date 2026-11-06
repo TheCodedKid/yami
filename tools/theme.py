@@ -1238,13 +1238,17 @@ def cursor(p):
         subprocess.run(["gsettings", "set", "org.gnome.desktop.interface", "cursor-size", str(size)], check=False, capture_output=True)
 
 
-SDDM_DIR = Path("/usr/share/sddm/themes/yami")
+def sddm_dir():
+    dirs = os.environ.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share"
+    candidates = [Path(d) / "sddm/themes/yami" for d in dirs.split(os.pathsep) if Path(d).is_absolute()]
+    fallback = Path("/usr/share/sddm/themes/yami")
+    return next((d for d in candidates + [fallback] if d.is_dir()), fallback)
 
 
 def sddm(p, target=None):
     """Экран входа: цвета в theme.conf.user, обои шелла — background.png рядом с темой
     (приветствие работает от пользователя sddm и в домашнюю папку не заглядывает)."""
-    d = Path(target) if target else SDDM_DIR
+    d = Path(target) if target else sddm_dir()
     user = d / "theme.conf.user"
     if not target and not (d.is_dir() and os.access(user if user.exists() else d, os.W_OK)):
         return

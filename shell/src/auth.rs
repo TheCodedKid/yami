@@ -21,7 +21,7 @@ use zbus::zvariant::{OwnedValue, Value};
 pub const SIZE: (i32, i32) = (446, 248);
 const PATH: &str = "/org/yami/PolkitAgent";
 pub const SOCKET: &str = "/run/polkit/agent-helper.socket";
-pub const HELPERS: &[&str] = &["/usr/lib/polkit-1/polkit-agent-helper-1", "/usr/libexec/polkit-agent-helper-1", "/usr/lib/policykit-1/polkit-agent-helper-1", "/usr/libexec/polkit-1/polkit-agent-helper-1"];
+pub const HELPERS: &[&str] = &["/run/wrappers/bin/polkit-agent-helper-1", "/usr/lib/polkit-1/polkit-agent-helper-1", "/usr/libexec/polkit-agent-helper-1", "/usr/lib/policykit-1/polkit-agent-helper-1", "/usr/libexec/polkit-1/polkit-agent-helper-1"];
 const TRIES: u32 = 3;
 
 /// ответы окна нитям запросов: cookie → пароль (None — отмена)
@@ -102,7 +102,7 @@ fn session(user: &str, cookie: &str, tx: &Sender<Msg>, rx: &mpsc::Receiver<Optio
         }
         (w, Box::new(s2))
     } else {
-        let Some(h) = HELPERS.iter().find(|p| std::path::Path::new(p).exists()) else { return Out::Bad };
+        let Some(h) = yami_px::paths::find_executable("polkit-agent-helper-1", HELPERS) else { return Out::Bad };
         let Ok(mut ch) = std::process::Command::new(h).arg(user).stdin(std::process::Stdio::piped()).stdout(std::process::Stdio::piped()).stderr(std::process::Stdio::null()).spawn() else { return Out::Bad };
         let (Some(mut i), Some(o)) = (ch.stdin.take(), ch.stdout.take()) else { return Out::Bad };
         if writeln!(i, "{cookie}").is_err() {

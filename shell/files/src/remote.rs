@@ -405,7 +405,7 @@ pub fn usb_phones_without_backend() -> Vec<Dev> {
 
 /// есть ли у gvfs бэкенды для телефонов (иначе подскажем пакет)
 fn phone_backends() -> bool {
-    ["/usr/lib/gvfsd-mtp", "/usr/libexec/gvfsd-mtp", "/usr/lib/gvfs/gvfsd-mtp", "/usr/lib/x86_64-linux-gnu/gvfs/gvfsd-mtp", "/usr/lib64/gvfs/gvfsd-mtp"].iter().any(|p| Path::new(p).exists())
+    yami_px::paths::find_executable("gvfsd-mtp", &["/usr/lib/gvfsd-mtp", "/usr/libexec/gvfsd-mtp", "/usr/lib/gvfs/gvfsd-mtp", "/usr/lib/x86_64-linux-gnu/gvfs/gvfsd-mtp", "/usr/lib64/gvfs/gvfsd-mtp"]).is_some()
 }
 
 #[cfg(test)]
