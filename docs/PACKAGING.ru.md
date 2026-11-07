@@ -21,3 +21,23 @@ cargo build --release --locked --workspace --features yami-shell/package-managed
 Такая сборка не проверяет обновления по расписанию, вкладка обновлений показывает заметку вместо кнопок, а `yami update` (с любой подкомандой) пишет «Обновлениями управляет пакетный менеджер.» и выходит с 1. Обновление, переход на выпуск и откат отказываются раньше, чем тронут клон исходников или установленные бинари. Обновляйте и откатывайте пакетным менеджером. Сборка без признака сохраняет обновления.
 
 Не запускайте `install.sh` поверх установки, которой владеет пакетный менеджер.
+
+## Флейк Nix
+
+Флейк собирает yami из `shell/Cargo.lock` с включённым `package-managed`. Все файлы Nix лежат в `flake.nix` и `nix/`.
+
+| Выход | Что это |
+|---|---|
+| `packages.<system>.yami` (`default`) | `yami-shell`, `yami`, `yami-files`, `yami-view`, `yami-play`; файлы `.desktop`, портал и его службы D-Bus, свои шрифты |
+| `packages.<system>.yami-sddm-theme` | экран входа в `share/sddm/themes/yami` и курсор `share/icons/yami-cursor`, раскрашенные при сборке |
+| `overlays.default` | оба пакета в `pkgs` |
+| `devShells.<system>.default` | Rust, системные библиотеки и libmpv для `tools/check.sh` |
+
+```sh
+nix build github:Trendorin/yami
+nix develop
+```
+
+Цвета экрана входа задаются переопределением: `yami-sddm-theme.override { loginAccent = "#3a7bd5"; loginLight = true; }`. yami-play находит libmpv через RUNPATH своего бинаря.
+
+Пакет не пишет в `~/.config`: конфиг niri, выбор портала, kitty и настройки шелла — дело модуля Home Manager.
