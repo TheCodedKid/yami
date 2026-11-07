@@ -67,6 +67,7 @@ if [[ -x $PLAY ]]; then
 fi
 step "unit tests"
 cargo test --release --locked --workspace --quiet --manifest-path "$ROOT/shell/Cargo.toml" >"$TMP/test.log" 2>&1 && ok "cargo test" || { tail -20 "$TMP/test.log"; bad "cargo test"; }
+cargo test --release --locked --workspace --quiet --features yami-shell/package-managed --manifest-path "$ROOT/shell/Cargo.toml" package_manager_owns_updates >"$TMP/managed.log" 2>&1 && ok "cargo test (package-managed)" || { tail -20 "$TMP/managed.log"; bad "cargo test --features package-managed"; }
 
 step "login screen (SDDM theme, offscreen)"
 QML="$(command -v qml6 || command -v qml || { [[ -x /usr/lib/qt6/bin/qml ]] && echo /usr/lib/qt6/bin/qml; } || true)"
