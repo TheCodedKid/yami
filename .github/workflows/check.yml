@@ -18,3 +18,10 @@ jobs:
         with:
           workspaces: shell
       - run: tools/check.sh
+  nix:
+    # flake.nix and nix/: both packages build from Cargo.lock in the Nix sandbox (docs/PACKAGING.md)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - run: nix flake check -L --show-trace
