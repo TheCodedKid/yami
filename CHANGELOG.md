@@ -9,6 +9,7 @@ has its Russian line in CHANGELOG.ru.md: `tools/check.sh` checks that.
 
 ## Unreleased
 
+- Nix: a Home Manager module, `programs.yami`: the package, settings merged into `yami-shell.json`, yami's niri config, kitty, fonts, the portal and default applications ([docs/PACKAGING.md](docs/PACKAGING.md#home-manager-module), #1).
 - Nix: `flake.nix` builds yami and its SDDM theme (`nix build github:Trendorin/yami`), with an overlay and a dev shell; CI builds both ([docs/PACKAGING.md](docs/PACKAGING.md#nix-flake), #1).
 - Packagers: the Cargo feature `package-managed` hands updates to the package manager: no scheduled checks, the updates tab shows a note, `yami update` refuses and exits with 1 ([docs/PACKAGING.md](docs/PACKAGING.md), #1).
 - Phones, cameras and drives mount by themselves when they are plugged in (settings → services → drives and phones, `automount`, `automountOpen`), like in GNOME and KDE: USB sticks, external disks, memory cards, CDs and DVDs, disk images, Android phones in file transfer mode (MTP), cameras and phones in PTP mode, iPhones and iPads. The shell listens to udev without polling (a netlink socket that the kernel filters down to `block` and `usb` events) and mounts what the volume itself asks to be mounted, once per plug (a phone that is still locked is tried again for half a minute): a card says what was mounted and opens it. Encrypted drives ask for their password in yami-files instead.

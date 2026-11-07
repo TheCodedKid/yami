@@ -46,8 +46,9 @@ rustPlatform.buildRustPackage {
       install -Dm644 "$f" "$out/share/dbus-1/services/''${f##*/}"
       substituteInPlace "$out/share/dbus-1/services/''${f##*/}" --replace-fail @BIN@ "$out/bin/yami-files"
     done
-    # niri-portals.conf and the fontconfig rule are per-user config: the Home Manager module links them
-    install -Dm644 -t $out/share/yami config/portal/niri-portals.conf config/fontconfig/50-yami-pixel.conf
+    # per-user config that the Home Manager module links or seeds into ~/.config
+    install -Dm644 -t $out/share/yami config/niri/config.kdl config/kitty/yami.conf \
+      config/portal/niri-portals.conf config/fontconfig/50-yami-pixel.conf
     install -Dm644 -t $out/share/fonts/truetype/yami fonts/*.ttf
     install -Dm644 -t $out/share/licenses/yami fonts/OFL-*.txt LICENSE
   '';

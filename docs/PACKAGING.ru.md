@@ -40,4 +40,28 @@ nix develop
 
 Цвета экрана входа задаются переопределением: `yami-sddm-theme.override { loginAccent = "#3a7bd5"; loginLight = true; }`. yami-play находит libmpv через RUNPATH своего бинаря.
 
-Пакет не пишет в `~/.config`: конфиг niri, выбор портала, kitty и настройки шелла — дело модуля Home Manager.
+Пакет не пишет в `~/.config`: конфиг niri, выбор портала, kitty и настройки шелла — дело модуля Home Manager (ниже).
+
+## Модуль Home Manager
+
+```nix
+{
+  inputs.yami.url = "github:Trendorin/yami";
+  # в конфигурации Home Manager:
+  imports = [ inputs.yami.homeManagerModules.default ];
+  programs.yami = {
+    enable = true;
+    settings = { palette = "sakura"; lang = "en"; };
+  };
+}
+```
+
+| Параметр | По умолчанию | Что делает |
+|---|---|---|
+| `settings` | `{}` | ключи `~/.config/yami-shell.json` ([CONFIG.ru.md](CONFIG.ru.md)), сливаются при каждой активации: они главнее, остальное из панели настроек остаётся |
+| `niriConfig` | `true` | `~/.config/niri/config.kdl` от yami, копия, как у `install.sh`, и заменяется, только пока `~/.config/niri/.yami` помечает его как файл yami; свои строки — в `user.kdl` |
+| `kitty` | `programs.kitty.enable` | ссылка на `kitty/yami.conf` и его подключение |
+| `defaultApplications` | `true` | yami-files, yami-view и yami-play в `xdg.mimeApps` (с `xdg.mimeApps.enable`) |
+| `extraPackages` | команды, которые зовёт шелл | `python3`, `wl-clipboard`, `cliphist`, `playerctl`, `grim` и другие |
+
+Шелл переписывает свои настройки, клавиши, экраны и выбор порталов, пока работает, поэтому эти файлы — копии, которые модуль кладёт один раз, а не ссылки в хранилище. niri запускает шелл из `config.kdl`; с `niriConfig = false` добавьте в свой строки `include optional=true "yami-….kdl"` из `config.kdl` yami. Системные службы (NetworkManager, gvfs, udisks, polkit, power-profiles-daemon) и тема SDDM — параметры NixOS, а не Home Manager.

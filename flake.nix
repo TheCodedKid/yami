@@ -46,6 +46,8 @@
         inherit (self.packages.${pkgs.stdenv.hostPlatform.system}) yami yami-sddm-theme;
       });
 
+      homeManagerModules.default = import ./nix/hm-module.nix self;
+
       overlays.default = _final: prev: packagesFor prev;
 
       devShells = forAll (pkgs: {

@@ -40,4 +40,28 @@ nix develop
 
 The login screen takes its colours as overrides: `yami-sddm-theme.override { loginAccent = "#3a7bd5"; loginLight = true; }`. yami-play finds libmpv through the RUNPATH of its binary.
 
-The package does not write `~/.config`: the niri config, the portal choice, kitty and the shell settings are the Home Manager module's job.
+The package does not write `~/.config`: the niri config, the portal choice, kitty and the shell settings are the Home Manager module's job (below).
+
+## Home Manager module
+
+```nix
+{
+  inputs.yami.url = "github:Trendorin/yami";
+  # in the Home Manager configuration:
+  imports = [ inputs.yami.homeManagerModules.default ];
+  programs.yami = {
+    enable = true;
+    settings = { palette = "sakura"; lang = "en"; };
+  };
+}
+```
+
+| Option | Default | What it does |
+|---|---|---|
+| `settings` | `{}` | keys of `~/.config/yami-shell.json` ([CONFIG.md](CONFIG.md)), merged on every activation: they win, the rest of the settings panel stays |
+| `niriConfig` | `true` | yami's `~/.config/niri/config.kdl`, copied like `install.sh` does and replaced only while `~/.config/niri/.yami` marks it as yami's; your own lines go into `user.kdl` |
+| `kitty` | `programs.kitty.enable` | links `kitty/yami.conf` and includes it |
+| `defaultApplications` | `true` | yami-files, yami-view and yami-play in `xdg.mimeApps` (with `xdg.mimeApps.enable`) |
+| `extraPackages` | the commands the shell runs | `python3`, `wl-clipboard`, `cliphist`, `playerctl`, `grim` and others |
+
+The shell rewrites its settings, keys, screens and portal choice while it runs, so those files are copies the module seeds once, not links into the store. niri starts the shell from `config.kdl`; with `niriConfig = false` add the `include optional=true "yami-….kdl"` lines of yami's `config.kdl` to your own. System services (NetworkManager, gvfs, udisks, polkit, power-profiles-daemon) and the SDDM theme are NixOS options, not Home Manager ones.
